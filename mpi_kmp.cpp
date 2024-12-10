@@ -71,11 +71,14 @@ int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
 
+<<<<<<< HEAD
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
     std::string p_n = processor_name;
 
+=======
+>>>>>>> d2b3c2eeb0c41753f6ab2f988ca696c48645af44
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -179,7 +182,6 @@ int main(int argc, char** argv) {
         kmpTimeCounts = new double[size];
         displs = new int[size];  // 用于 MPI_Gatherv 中的位置偏移
     }
-
 
 
 
