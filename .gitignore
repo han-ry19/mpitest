@@ -1,0 +1,10 @@
+*.txt
+tau_mpi_kmp
+omp_mpi_kmp.cpp
+omp_mpi_kmp
+mpi_kmp
+mpi_hello_world
+kmp
+generate
+compare
+a.out
