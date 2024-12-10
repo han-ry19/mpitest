@@ -6,13 +6,13 @@
 #include <string>
 
 #define MAX_PATTERN_LENGTH 1000
-#define MAX_TEXT_LENGTH 1000000000000000000
+#define MAX_TEXT_LENGTH 10000000000
 
 // 随机生成指定长度的字符串
-std::string generateRandomString(long long length) {
+std::string generateRandomString(int length) {
     std::string result;
     for (int i = 0; i < length; i++) {
-        char randomChar = 'a' + rand() % 26;  // 生成 a-z 范围的随机字符
+        char randomChar = '0' + rand() % 2;  // 生成 0-1 范围的随机字符
         result += randomChar;
     }
     return result;
@@ -44,13 +44,11 @@ int main(int argc, char* argv[]) {
     srand(static_cast<unsigned int>(time(0)));  // 初始化随机数种子
 
     const int numFiles = std::atoi(argv[1]);        // 生成 10 个文件
-    const size_t textLength = std::atoll(argv[2]); // 每个文件的文本长度
-    const size_t  patternLength = std::atoi(argv[3]);  // 每个文件的模式长度
-    const size_t  numInserts = std::atoi(argv[4]);       // 每个文件中插入的模式数量
+    const int textLength = std::atoi(argv[2]); // 每个文件的文本长度
+    const int patternLength = std::atoi(argv[3]);  // 每个文件的模式长度
+    const int numInserts = std::atoi(argv[4]);       // 每个文件中插入的模式数量
 
-    std::cout<<textLength<<patternLength<<numInserts<<std::endl;
-
-    if (textLength > MAX_TEXT_LENGTH || patternLength > MAX_PATTERN_LENGTH || numInserts > (textLength/patternLength)){
+    if (textLength>MAX_TEXT_LENGTH || patternLength > MAX_PATTERN_LENGTH || numInserts > (textLength/patternLength)){
         std::cerr << "Invalid parameters" << std::endl;
         return 1;
     }
@@ -65,43 +63,17 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        // 分割文件，分别输入文件，防止内存爆掉
-        const long long maxPerInput = 1000000000;
-        int InputCount = textLength/maxPerInput;
-        if(textLength % maxPerInput != 0) {
-            InputCount = InputCount++;
-            
-        }
-
         // 生成随机模式
         std::string pattern = generateRandomString(patternLength);
-
-        for(int j=0;j<InputCount-1;j++) {
-            std::cout << j << std::endl;
-            std::string text = generateRandomString(textLength);
-            int new_insert = rand() % numInserts;
-            // 随机插入模式串到文本中
-            std::string modifiedText = insertPatternIntoText(text, pattern, new_insert);
-            outFile << modifiedText; // 写入文本
-            std::cout << j << std::endl;
-        }
-
+        // 生成随机文本
         std::string text = generateRandomString(textLength);
+
         int new_insert = rand() % numInserts;
         // 随机插入模式串到文本中
-        if(textLength % maxPerInput == 0)
-        {std::string modifiedText = insertPatternIntoText(text, pattern, new_insert);
-        outFile << modifiedText << std::endl;} // 写入文本
-        else {
-            outFile << text << std::endl;
-        }
-        // 生成随机文本
-
-
-
+        std::string modifiedText = insertPatternIntoText(text, pattern, new_insert);
 
         // 将生成的文本和模式写入文件
-
+        outFile << modifiedText << std::endl; // 写入文本
         outFile << pattern << std::endl;      // 写入模式
 
         outFile.close();

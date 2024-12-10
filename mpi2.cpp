@@ -7,7 +7,7 @@
 #include <cstring>
 
 #define MAX_PATTERN_LENGTH 1002
-#define MAX_TEXT_LENGTH 2000000000
+#define MAX_TEXT_LENGTH 10000000000
 
 // KMP算法计算部分匹配表（前缀函数）
 void computeLPSArray(const char* pattern, int* lps, int m) {
@@ -71,14 +71,6 @@ int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
 
-<<<<<<< HEAD
-    char processor_name[MPI_MAX_PROCESSOR_NAME];
-    int name_len;
-    MPI_Get_processor_name(processor_name, &name_len);
-    std::string p_n = processor_name;
-
-=======
->>>>>>> d2b3c2eeb0c41753f6ab2f988ca696c48645af44
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -92,7 +84,7 @@ int main(int argc, char** argv) {
 
     // const char* inputFilename = argv[1];  // 输入文件名
     // const char* outputFilename = argv[2]; // 输出文件名
-    const char* inputFilename = "/mnt/mpitest/test_case_8_5.txt";
+    const char* inputFilename = "/mnt/mpitest/test_case_0.txt";
     const char* outputFilename = "/mnt/mpitest/output_mpi.txt";
 
     char* text = NULL;
@@ -127,13 +119,11 @@ int main(int argc, char** argv) {
 
     int* LPS = new int[m];
 
-    computeLPSArray(pattern, LPS, m);
+    if (rank == 0) {
+        computeLPSArray(pattern, LPS, m);
+    }
 
-    // if (rank == 0) {
-    //     computeLPSArray(pattern, LPS, m);
-    // }
-
-    // MPI_Bcast(LPS, m, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(LPS, m, MPI_INT, 0, MPI_COMM_WORLD);
 
     // 分割文本，每个进程处理的长度（需要补偿 m-1 个字符）
     int segmentLength = totalLength / size;
@@ -142,9 +132,11 @@ int main(int argc, char** argv) {
 
     // 分配局部文本段空间，并接收文本段
     char* localText = new char[segmentLength + m];  // 多分配 m-1 字符以处理重叠
-    clock_t start_time = clock();
+
     if (rank == 0) {
         // 主进程分发文本段
+        clock_t start_time = clock();
+
         for (int i = 1; i < size; i++) {
             int start = i * segmentLength;
             int len = (i == size - 1) ? (totalLength - start + m - 1) : segmentLength + m - 1;
@@ -155,15 +147,12 @@ int main(int argc, char** argv) {
 
         clock_t end_time = clock();
         double time_taken = double(end_time - start_time) / CLOCKS_PER_SEC;
-        std::cout << "Time taken by send: " << time_taken << " seconds" << std::endl;
+        // std::cout << "Time taken by send: " << time_taken << " seconds" << std::endl;
 
     } else {
         // 接收主进程发来的文本段
         int len = (rank == size - 1) ? (totalLength - startIndex + m -1) : segmentLength + m - 1;
         MPI_Recv(localText, len, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        std::cout << "Data : " << len << " bytes by rank " << rank << " by processor "<<p_n<<std::endl;
-        clock_t end_time2 = clock();
-        std::cout << "Time : " << double(end_time2 - start_time) / CLOCKS_PER_SEC << "sec by rank " << rank << " by processor "<<p_n<<std::endl;
     }
 
     clock_t start_time_2 = clock();
@@ -183,6 +172,10 @@ int main(int argc, char** argv) {
         displs = new int[size];  // 用于 MPI_Gatherv 中的位置偏移
     }
 
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    int name_len;
+    MPI_Get_processor_name(processor_name, &name_len);
+    std::string p_n = processor_name;
 
 
     clock_t end_time_2 = clock();
