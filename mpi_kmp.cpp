@@ -272,6 +272,7 @@ int main(int argc, char** argv) {
     // if(rank == 0){
     // std::cout << "Global time: " << global_time << " seconds" << std::endl;
     // }
+    //
     MPI_Finalize();
     return 0;
 }
