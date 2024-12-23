@@ -5,6 +5,7 @@ omp_mpi_kmp
 mpi_kmp
 mpi_hello_world
 kmp
+mpi2
 generate
 compare
 a.out

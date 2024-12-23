@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
     // const char* inputFilename = argv[1];  // 输入文件名
     // const char* outputFilename = argv[2]; // 输出文件名
-    const char* inputFilename = "/mnt/mpitest/test_case_0.txt";
+    const char* inputFilename = "/mnt/mpitest/test_case_tst.txt";
     const char* outputFilename = "/mnt/mpitest/output_mpi.txt";
 
     char* text = NULL;
@@ -106,16 +106,13 @@ int main(int argc, char** argv) {
         inFile.getline(pattern, MAX_PATTERN_LENGTH);
         totalLength = std::strlen(text);
         m = std::strlen(pattern);
+        std::cout << m << totalLength;
         inFile.close();
     }
-
 
     // 广播模式串长度和 LPS 数组
     MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(pattern, m + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-    // 广播整个文本长度
-    MPI_Bcast(&totalLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     int* LPS = new int[m];
 
@@ -125,35 +122,69 @@ int main(int argc, char** argv) {
 
     MPI_Bcast(LPS, m, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // 分割文本，每个进程处理的长度（需要补偿 m-1 个字符）
-    int segmentLength = totalLength / size;
+    // 广播整个文本长度
+    MPI_Bcast(&totalLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+    int segmentLength;
+
+    if (totalLength%size == 0)
+        segmentLength = totalLength / size;
+    else
+        segmentLength = totalLength / size + 1;
+
     int startIndex = rank * segmentLength;
-    // int endIndex = (rank == size - 1) ? totalLength : startIndex + segmentLength;
+    int loc_len = (rank == size - 1) ? (totalLength - startIndex) : segmentLength;
 
-    // 分配局部文本段空间，并接收文本段
-    char* localText = new char[segmentLength + m];  // 多分配 m-1 字符以处理重叠
+    char* localText = new char[segmentLength + m]; 
 
-    if (rank == 0) {
-        // 主进程分发文本段
-        clock_t start_time = clock();
+    MPI_File file;
+    MPI_File_open(MPI_COMM_WORLD, inputFilename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
 
-        for (int i = 1; i < size; i++) {
-            int start = i * segmentLength;
-            int len = (i == size - 1) ? (totalLength - start + m - 1) : segmentLength + m - 1;
-            MPI_Send(&text[start - (m - 1)], len, MPI_CHAR, i, 0, MPI_COMM_WORLD);
-        }
-        // 主进程处理自己的部分
-        strncpy(localText, text, segmentLength);
+    // 获取文件的大小
+    MPI_Offset file_size;
+    MPI_File_get_size(file, &file_size);
 
-        clock_t end_time = clock();
-        double time_taken = double(end_time - start_time) / CLOCKS_PER_SEC;
-        // std::cout << "Time taken by send: " << time_taken << " seconds" << std::endl;
 
-    } else {
-        // 接收主进程发来的文本段
-        int len = (rank == size - 1) ? (totalLength - startIndex + m -1) : segmentLength + m - 1;
-        MPI_Recv(localText, len, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Offset chunk_size = segmentLength;
+    MPI_Offset start_offset = startIndex;
+
+    // 计算要读取的数据大小
+
+    // 读取文件的相应部分
+    MPI_File_read_at(file, start_offset,(rank==0 ? localText : localText+m-1), loc_len, MPI_CHAR, MPI_STATUS_IGNORE);
+
+    // 关闭文件
+    MPI_File_close(&file);
+
+
+    //  //传递文本串的重叠部分
+    char* send_value = localText + loc_len - m;
+
+    // 发送给下一个进程
+    int next_rank = (rank + 1) % size;  // 下一个进程的rank，最后一个进程将向第一个进程发送数据
+    int prev_rank = (rank - 1 + size) % size;  // 上一个进程的rank，考虑循环的情况
+
+    if (rank != 0) {
+        // 进程1以外的进程接收并发送数据
+        MPI_Recv(localText, m-1, MPI_CHAR, prev_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        std::cout << "进程 " << rank << " 收到来自进程 " << prev_rank << " 的数据 " << std::endl;
     }
+
+    // 所有进程发送数据给下一个进程
+    MPI_Send(send_value, m-1, MPI_CHAR, next_rank, 0, MPI_COMM_WORLD);
+
+    // 第一个进程不接收数据，只负责发送
+    if (rank == 0) {
+        std::cout << "进程 " << rank << " 不接收数据，直接发送给进程 " << next_rank << std::endl;
+    }
+
+    std::cout << "进程 " << rank << " 读取的数据: ";
+    for (int i = 0; i < (rank==0 ? loc_len : loc_len+m-1); ++i) {  // 只输出前100个字符
+        std::cout << localText[i];
+    }
+    std::cout << std::endl;
+
 
     clock_t start_time_2 = clock();
 
@@ -204,6 +235,7 @@ int main(int argc, char** argv) {
 
     // 主进程输出结果
     if (rank == 0) {
+
     std::ofstream outFile(outputFilename);
     if (!outFile) {
         std::cerr << "Error opening output file: " << outputFilename << std::endl;
@@ -218,7 +250,7 @@ int main(int argc, char** argv) {
 
     std::vector<int> allMatches(matchPositions, matchPositions + totalMatches);
 
-
+    std::cout << totalMatches << std::endl;
 
     if ( rank == 0) {
         double avgTimeKmp = 0.0;
@@ -231,19 +263,19 @@ int main(int argc, char** argv) {
     }
 
     // 输出排序后的结果
-    double elapsedTime = 8.78; // 假设耗时8.78秒，可根据实际计算替换
-    outFile << "Time taken by KMP: " << elapsedTime << " seconds" << std::endl;
-    outFile << "Total matches found: " << totalMatches << std::endl;
-    outFile << "Match positions: ";
+    // double elapsedTime = 8.78; // 假设耗时8.78秒，可根据实际计算替换
+    // outFile << "Time taken by KMP: " << elapsedTime << " seconds" << std::endl;
+    // outFile << "Total matches found: " << totalMatches << std::endl;
+    // outFile << "Match positions: ";
     
-    for (int i = 0; i < totalMatches; i++) {
-        outFile << allMatches[i];
-        if (i != totalMatches - 1) {
-            outFile << " ";
-        }
-    }
-    outFile << std::endl;
-    outFile.close();
+    // for (int i = 0; i < totalMatches; i++) {
+    //     outFile << allMatches[i];
+    //     if (i != totalMatches - 1) {
+    //         outFile << " ";
+    //     }
+    // }
+    // outFile << std::endl;
+    // outFile.close();
 }
 
     // 清理内存
@@ -251,6 +283,7 @@ int main(int argc, char** argv) {
     delete[] localText;
     delete[] localMatchPositions;
     delete[] LPS;
+
     if (rank == 0) {
         delete[] globalMatchCounts;
         delete[] displs;
