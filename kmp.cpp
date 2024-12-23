@@ -72,13 +72,16 @@ int main(int argc, char* argv[]) {
 
     clock_t global_start = clock();
 
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <input_file> <output_file>" << std::endl;
-        return 1;
-    }
+    // if (argc != 3) {
+    //     std::cerr << "Usage: " << argv[0] << " <input_file> <output_file>" << std::endl;
+    //     return 1;
+    // }
 
-    const char* inputFilename = argv[1];  
-    const char* outputFilename = argv[2]; 
+    // const char* inputFilename = argv[1];  
+    // const char* outputFilename = argv[2]; 
+
+    const char* inputFilename = "/mnt/mpitest/test_case_0.txt";
+    const char* outputFilename = "/mnt/mpitest/output_local.txt";
 
     // 动态分配文本和模式串的内存
     char* text = new char[MAX_TEXT_LENGTH + 1];   
@@ -115,18 +118,18 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    outFile << "Time taken by KMP: " << time_taken << " seconds" << std::endl;
     std::cout << "Time taken by KMP: " << time_taken << " seconds" << std::endl;
-    outFile << "Total matches found: " << matchCount << std::endl;
+    outFile << matchCount << std::endl;
 
     if (matchCount > 0) {
-        outFile << "Match positions: ";
         for (int i = 0; i < matchCount; i++) {
-            outFile << matchPositions[i] << " ";
+            outFile << matchPositions[i];
+            if (i!=matchCount-1)
+            outFile << " ";
         }
         outFile << std::endl;
     } else {
-        outFile << "No matches found." << std::endl;
+        // outFile << "No matches found." << std::endl;
     }
 
     outFile.close();

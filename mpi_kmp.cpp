@@ -7,7 +7,7 @@
 #include <cstring>
 
 #define MAX_PATTERN_LENGTH 1002
-#define MAX_TEXT_LENGTH 2000000000
+#define MAX_TEXT_LENGTH 1000000000
 
 // KMP算法计算部分匹配表（前缀函数）
 void computeLPSArray(const char* pattern, int* lps, int m) {
@@ -71,14 +71,11 @@ int main(int argc, char** argv) {
 
     MPI_Init(&argc, &argv);
 
-<<<<<<< HEAD
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
     std::string p_n = processor_name;
 
-=======
->>>>>>> d2b3c2eeb0c41753f6ab2f988ca696c48645af44
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -92,7 +89,7 @@ int main(int argc, char** argv) {
 
     // const char* inputFilename = argv[1];  // 输入文件名
     // const char* outputFilename = argv[2]; // 输出文件名
-    const char* inputFilename = "/mnt/mpitest/test_case_8_5.txt";
+    const char* inputFilename = "/mnt/mpitest/test_case_0.txt";
     const char* outputFilename = "/mnt/mpitest/output_mpi.txt";
 
     char* text = NULL;
@@ -237,12 +234,7 @@ int main(int argc, char** argv) {
         std::cout << avgTimeKmp << std::endl;
     }
 
-    // 输出排序后的结果
-    double elapsedTime = 8.78; // 假设耗时8.78秒，可根据实际计算替换
-    outFile << "Time taken by KMP: " << elapsedTime << " seconds" << std::endl;
-    outFile << "Total matches found: " << totalMatches << std::endl;
-    outFile << "Match positions: ";
-    
+    outFile << totalMatches << std::endl;
     for (int i = 0; i < totalMatches; i++) {
         outFile << allMatches[i];
         if (i != totalMatches - 1) {
@@ -269,10 +261,10 @@ int main(int argc, char** argv) {
     clock_t global_end = clock();
     double global_time = double(global_end - global_start)/CLOCKS_PER_SEC;
 
-    // if(rank == 0){
-    // std::cout << "Global time: " << global_time << " seconds" << std::endl;
-    // }
-    //
+    if(rank == 0){
+    std::cout << "Global time: " << global_time << " seconds" << std::endl;
+    }
+    
     MPI_Finalize();
     return 0;
 }

@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
     // const char* inputFilename = argv[1];  // 输入文件名
     // const char* outputFilename = argv[2]; // 输出文件名
-    const char* inputFilename = "/mnt/mpitest/test_case_tst.txt";
+    const char* inputFilename = "/mnt/mpitest/test_case_0.txt";
     const char* outputFilename = "/mnt/mpitest/output_mpi.txt";
 
     char* text = NULL;
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
         inFile.getline(pattern, MAX_PATTERN_LENGTH);
         totalLength = std::strlen(text);
         m = std::strlen(pattern);
-        std::cout << m << totalLength;
+        // std::cout << m << totalLength;
         inFile.close();
     }
 
@@ -145,8 +145,6 @@ int main(int argc, char** argv) {
     MPI_Offset file_size;
     MPI_File_get_size(file, &file_size);
 
-
-    MPI_Offset chunk_size = segmentLength;
     MPI_Offset start_offset = startIndex;
 
     // 计算要读取的数据大小
@@ -168,22 +166,22 @@ int main(int argc, char** argv) {
     if (rank != 0) {
         // 进程1以外的进程接收并发送数据
         MPI_Recv(localText, m-1, MPI_CHAR, prev_rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        std::cout << "进程 " << rank << " 收到来自进程 " << prev_rank << " 的数据 " << std::endl;
+        // std::cout << "进程 " << rank << " 收到来自进程 " << prev_rank << " 的数据 " << std::endl;
     }
 
     // 所有进程发送数据给下一个进程
     MPI_Send(send_value, m-1, MPI_CHAR, next_rank, 0, MPI_COMM_WORLD);
 
-    // 第一个进程不接收数据，只负责发送
-    if (rank == 0) {
-        std::cout << "进程 " << rank << " 不接收数据，直接发送给进程 " << next_rank << std::endl;
-    }
+    // // 第一个进程不接收数据，只负责发送
+    // if (rank == 0) {
+    //     std::cout << "进程 " << rank << " 不接收数据，直接发送给进程 " << next_rank << std::endl;
+    // }
 
-    std::cout << "进程 " << rank << " 读取的数据: ";
-    for (int i = 0; i < (rank==0 ? loc_len : loc_len+m-1); ++i) {  // 只输出前100个字符
-        std::cout << localText[i];
-    }
-    std::cout << std::endl;
+    // std::cout << "进程 " << rank << " 读取的数据: ";
+    // for (int i = 0; i < (rank==0 ? loc_len : loc_len+m-1); ++i) {  // 只输出前100个字符
+    //     std::cout << localText[i];
+    // }
+    // std::cout << std::endl;
 
 
     clock_t start_time_2 = clock();
@@ -252,30 +250,31 @@ int main(int argc, char** argv) {
 
     std::cout << totalMatches << std::endl;
 
+    for(int i = 0 ; i<totalMatches ;i++)
+    {
+        std::cout << allMatches[i] << " ";
+    }
+    std::cout << std::endl;
+
     if ( rank == 0) {
         double avgTimeKmp = 0.0;
         for(int i=0;i< size ; i++) {
             avgTimeKmp += kmpTimeCounts[i];
         }
         avgTimeKmp /= (double)size;
-        // std::cout << "Proc number:" << size << ", ";
-        std::cout << avgTimeKmp << std::endl;
+        std::cout << "Proc number:" << size << ", ";
+        std::cout << "Time: " << avgTimeKmp << "seconds" << std::endl;
     }
 
-    // 输出排序后的结果
-    // double elapsedTime = 8.78; // 假设耗时8.78秒，可根据实际计算替换
-    // outFile << "Time taken by KMP: " << elapsedTime << " seconds" << std::endl;
-    // outFile << "Total matches found: " << totalMatches << std::endl;
-    // outFile << "Match positions: ";
-    
-    // for (int i = 0; i < totalMatches; i++) {
-    //     outFile << allMatches[i];
-    //     if (i != totalMatches - 1) {
-    //         outFile << " ";
-    //     }
-    // }
-    // outFile << std::endl;
-    // outFile.close();
+    outFile << totalMatches << std::endl;
+    for (int i = 0; i < totalMatches; i++) {
+        outFile << allMatches[i];
+        if (i != totalMatches - 1) {
+            outFile << " ";
+        }
+    }
+    outFile << std::endl;
+    outFile.close();
 }
 
     // 清理内存
@@ -295,9 +294,9 @@ int main(int argc, char** argv) {
     clock_t global_end = clock();
     double global_time = double(global_end - global_start)/CLOCKS_PER_SEC;
 
-    // if(rank == 0){
-    // std::cout << "Global time: " << global_time << " seconds" << std::endl;
-    // }
+    if(rank == 0){
+    std::cout << "Global time: " << global_time << " seconds" << std::endl;
+    }
     MPI_Finalize();
     return 0;
 }
