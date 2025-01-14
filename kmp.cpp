@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::cout << "Time taken by KMP: " << time_taken << " seconds" << std::endl;
+    // std::cout << "Time taken by KMP: " << time_taken << " seconds" << std::endl;
     outFile << matchCount << std::endl;
 
     if (matchCount > 0) {
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
     }
 
     outFile.close();
-    std::cout << "Results written to " << outputFilename << std::endl;
+    // std::cout << "Results written to " << outputFilename << std::endl;
 
     // 释放动态分配的内存
     delete[] text;
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 
     clock_t global_end = clock();
     double global_time = double(global_end - global_start)/CLOCKS_PER_SEC;
-    std::cout << "Global time: " << global_time << " seconds" << std::endl;
+    std::cout << global_time << std::endl;
 
     return 0;
 }

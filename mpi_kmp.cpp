@@ -7,7 +7,7 @@
 #include <cstring>
 
 #define MAX_PATTERN_LENGTH 1002
-#define MAX_TEXT_LENGTH 1000000000
+#define MAX_TEXT_LENGTH 2000000000
 
 // KMP算法计算部分匹配表（前缀函数）
 void computeLPSArray(const char* pattern, int* lps, int m) {
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
 
     // 分配局部文本段空间，并接收文本段
     char* localText = new char[segmentLength + m];  // 多分配 m-1 字符以处理重叠
-    clock_t start_time = clock();
+    // clock_t start_time = clock();
     if (rank == 0) {
         // 主进程分发文本段
         for (int i = 1; i < size; i++) {
@@ -150,17 +150,17 @@ int main(int argc, char** argv) {
         // 主进程处理自己的部分
         strncpy(localText, text, segmentLength);
 
-        clock_t end_time = clock();
-        double time_taken = double(end_time - start_time) / CLOCKS_PER_SEC;
-        std::cout << "Time taken by send: " << time_taken << " seconds" << std::endl;
+        // clock_t end_time = clock();
+        // double time_taken = double(end_time - start_time) / CLOCKS_PER_SEC;
+        // std::cout << "Time taken by send: " << time_taken << " seconds" << std::endl;
 
     } else {
         // 接收主进程发来的文本段
         int len = (rank == size - 1) ? (totalLength - startIndex + m -1) : segmentLength + m - 1;
         MPI_Recv(localText, len, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        std::cout << "Data : " << len << " bytes by rank " << rank << " by processor "<<p_n<<std::endl;
-        clock_t end_time2 = clock();
-        std::cout << "Time : " << double(end_time2 - start_time) / CLOCKS_PER_SEC << "sec by rank " << rank << " by processor "<<p_n<<std::endl;
+        // std::cout << "Data : " << len << " bytes by rank " << rank << " by processor "<<p_n<<std::endl;
+        // clock_t end_time2 = clock();
+        // std::cout << "Time : " << double(end_time2 - start_time) / CLOCKS_PER_SEC << "sec by rank " << rank << " by processor "<<p_n<<std::endl;
     }
 
     clock_t start_time_2 = clock();
@@ -182,13 +182,13 @@ int main(int argc, char** argv) {
 
 
 
-    clock_t end_time_2 = clock();
-    double time_taken_2 = double(end_time_2 - start_time_2) / CLOCKS_PER_SEC;
+    // clock_t end_time_2 = clock();
+    // double time_taken_2 = double(end_time_2 - start_time_2) / CLOCKS_PER_SEC;
     // std::cout << "Time taken by KMP: " << time_taken_2 << " seconds by rank " << rank << " by processor "<<p_n<<std::endl;
 
     // 先收集每个进程的匹配数量
     MPI_Gather(&localMatchCount, 1, MPI_INT, globalMatchCounts, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&time_taken_2, 1, MPI_DOUBLE, kmpTimeCounts, 1, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
+    // MPI_Gather(&time_taken_2, 1, MPI_DOUBLE, kmpTimeCounts, 1, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
 
     // 计算偏移量并收集所有匹配的位置
     if (rank == 0) {
@@ -224,15 +224,15 @@ int main(int argc, char** argv) {
 
 
 
-    if ( rank == 0) {
-        double avgTimeKmp = 0.0;
-        for(int i=0;i< size ; i++) {
-            avgTimeKmp += kmpTimeCounts[i];
-        }
-        avgTimeKmp /= (double)size;
-        // std::cout << "Proc number:" << size << ", ";
-        std::cout << avgTimeKmp << std::endl;
-    }
+    // if ( rank == 0) {
+    //     double avgTimeKmp = 0.0;
+    //     for(int i=0;i< size ; i++) {
+    //         avgTimeKmp += kmpTimeCounts[i];
+    //     }
+    //     avgTimeKmp /= (double)size;
+    //     // std::cout << "Proc number:" << size << ", ";
+    //     std::cout << avgTimeKmp << std::endl;
+    // }
 
     outFile << totalMatches << std::endl;
     for (int i = 0; i < totalMatches; i++) {
@@ -256,13 +256,13 @@ int main(int argc, char** argv) {
         delete[] text;
         delete[] matchPositions;
         delete[] kmpTimeCounts;
-     }
+    }
 
     clock_t global_end = clock();
     double global_time = double(global_end - global_start)/CLOCKS_PER_SEC;
 
     if(rank == 0){
-    std::cout << "Global time: " << global_time << " seconds" << std::endl;
+    std::cout << global_time << std::endl;
     }
     
     MPI_Finalize();

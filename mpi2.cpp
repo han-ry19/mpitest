@@ -125,7 +125,6 @@ int main(int argc, char** argv) {
     // 广播整个文本长度
     MPI_Bcast(&totalLength, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-
     int segmentLength;
 
     if (totalLength%size == 0)
@@ -183,7 +182,6 @@ int main(int argc, char** argv) {
     // }
     // std::cout << std::endl;
 
-
     clock_t start_time_2 = clock();
 
     // 每个进程进行 KMP 搜索
@@ -206,14 +204,13 @@ int main(int argc, char** argv) {
     MPI_Get_processor_name(processor_name, &name_len);
     std::string p_n = processor_name;
 
-
-    clock_t end_time_2 = clock();
-    double time_taken_2 = double(end_time_2 - start_time_2) / CLOCKS_PER_SEC;
+    // clock_t end_time_2 = clock();
+    // double time_taken_2 = double(end_time_2 - start_time_2) / CLOCKS_PER_SEC;
     // std::cout << "Time taken by KMP: " << time_taken_2 << " seconds by rank " << rank << " by processor "<<p_n<<std::endl;
 
     // 先收集每个进程的匹配数量
     MPI_Gather(&localMatchCount, 1, MPI_INT, globalMatchCounts, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Gather(&time_taken_2, 1, MPI_DOUBLE, kmpTimeCounts, 1, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
+    // MPI_Gather(&time_taken_2, 1, MPI_DOUBLE, kmpTimeCounts, 1, MPI_DOUBLE, 0 ,MPI_COMM_WORLD);
 
     // 计算偏移量并收集所有匹配的位置
     if (rank == 0) {
@@ -248,23 +245,23 @@ int main(int argc, char** argv) {
 
     std::vector<int> allMatches(matchPositions, matchPositions + totalMatches);
 
-    std::cout << totalMatches << std::endl;
+    // std::cout << totalMatches << std::endl;
 
-    for(int i = 0 ; i<totalMatches ;i++)
-    {
-        std::cout << allMatches[i] << " ";
-    }
-    std::cout << std::endl;
+    // for(int i = 0 ; i<totalMatches ;i++)
+    // {
+    //     std::cout << allMatches[i] << " ";
+    // }
+    // std::cout << std::endl;
 
-    if ( rank == 0) {
-        double avgTimeKmp = 0.0;
-        for(int i=0;i< size ; i++) {
-            avgTimeKmp += kmpTimeCounts[i];
-        }
-        avgTimeKmp /= (double)size;
-        std::cout << "Proc number:" << size << ", ";
-        std::cout << "Time: " << avgTimeKmp << "seconds" << std::endl;
-    }
+    // if ( rank == 0) {
+    //     double avgTimeKmp = 0.0;
+    //     for(int i=0;i< size ; i++) {
+    //         avgTimeKmp += kmpTimeCounts[i];
+    //     }
+    //     avgTimeKmp /= (double)size;
+    //     std::cout << "Proc number:" << size << ", ";
+    //     std::cout << "Time: " << avgTimeKmp << "seconds" << std::endl;
+    // }
 
     outFile << totalMatches << std::endl;
     for (int i = 0; i < totalMatches; i++) {
@@ -289,14 +286,15 @@ int main(int argc, char** argv) {
         delete[] text;
         delete[] matchPositions;
         delete[] kmpTimeCounts;
-     }
+    }
 
     clock_t global_end = clock();
     double global_time = double(global_end - global_start)/CLOCKS_PER_SEC;
 
     if(rank == 0){
-    std::cout << "Global time: " << global_time << " seconds" << std::endl;
+    std::cout << global_time << std::endl;
     }
+
     MPI_Finalize();
     return 0;
 }
